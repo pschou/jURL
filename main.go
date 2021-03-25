@@ -58,6 +58,7 @@ func main() {
 	u, err := url.Parse(os.Args[2])
 	if err != nil {
 		fmt.Println("Malformed URL:", err)
+		os.Exit(1)
 	}
 	if debug {
 		fmt.Println("found", u)
@@ -115,7 +116,8 @@ func main() {
 		if debug {
 			fmt.Printf("%#v\n", v)
 		} else {
-			fmt.Printf("%v\n", v)
+			out, _ := json.Marshal(v)
+			fmt.Printf(string(out))
 		}
 	}
 }
