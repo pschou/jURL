@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha1"
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -22,11 +23,15 @@ var debug = false
 func main() {
 	var maxTries int
 	var debug, raw, includeHeader, certIgnore bool
+	var cert, key, ca string
 	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
 	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of retries")
 	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
 	flag.BoolVar(&includeHeader, "i", false, "Include header in output")
 	flag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
+	flag.StringVar(&ca, "ca", "", "Use client cert in request, PEM encoded")
+	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
+	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
 
 	flag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
@@ -36,7 +41,29 @@ func main() {
 
 	flag.Parse()
 	Args := flag.Args()
-	//fmt.Printf("osArgs %#v\n", Args)
+
+	var caCertPool *x509.CertPool
+	if ca != "" {
+		caCert, err := ioutil.ReadFile(ca)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCertPool = x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+	}
+
+	if cert != "" && key == "" {
+		// Just in case the cert and key are in the same file
+		key = cert
+	}
+	var keypair tls.Certificate
+	if cert != "" && key != "" {
+		var err error
+		keypair, err = tls.LoadX509KeyPair(cert, key)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	if len(Args) < 2 {
 		flag.Usage()
@@ -90,6 +117,8 @@ func main() {
 		i := j % len(Args)
 		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
 			InsecureSkipVerify: certIgnore,
+			RootCAs:            caCertPool,
+			Certificates:       []tls.Certificate{keypair},
 		}
 		if debug {
 			log.Println("http get", urls[i])

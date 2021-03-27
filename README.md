@@ -35,6 +35,12 @@ Usage:
   ./jurl [options] "JQuery" URLs
 
 Options:
+  -ca string
+        Use client cert in request, PEM encoded
+  -cert string
+        Use client cert in request, PEM encoded
+  -certkey string
+        Key file for client cert, PEM encoded
   -debug
         Debug / verbose output
   -i    Include header in output
