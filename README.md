@@ -58,9 +58,9 @@ Options:
   -r    Raw output, no quotes for strings
 ```
 
-## Example
+## What we want
 
-Here is an example showing usage using a rest endpoint:
+Here is an example showing usage using `curl` on a rest endpoint:
 ```
 [schou]$ curl https://jsonplaceholder.typicode.com/todos/1
 {
