@@ -18,6 +18,7 @@ execute faster.
 - Open source and free
 
 For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
+This cache will be used before any of the provided URLs are downloaded.
 For example, OpenStack or CS2 infrastructure both of which provide metadata / JSON
 endpoints for collecting system details.  These details don't change, but they
 can be queried multiple times for many uses, such as metrics, system
