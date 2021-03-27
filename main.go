@@ -24,7 +24,7 @@ func main() {
 	var maxTries int
 	var delay, maxAge time.Duration
 	var debug, raw, includeHeader, certIgnore, flush bool
-	var cert, key, ca string
+	var cert, key, ca, cache string
 	flag.BoolVar(&flush, "flush", false, "Force download, don't use cache.")
 	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
 	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
@@ -34,6 +34,7 @@ func main() {
 	flag.StringVar(&ca, "ca", "", "Use certificate authorities, PEM encoded")
 	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
 	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
+	flag.StringVar(&cache, "cache", "/dev/shm", "Path for cache")
 	flag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
 	flag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache")
 
@@ -96,7 +97,7 @@ func main() {
 		h.Write([]byte(fmt.Sprintf("%d", os.Getuid())))
 		bs := h.Sum(nil)
 
-		cacheFile := fmt.Sprintf("/dev/shm/jurl_%x", bs)
+		cacheFile := fmt.Sprintf("%s/jurl_%x", cache, bs)
 		cacheFiles[i] = cacheFile
 
 		stat, err := os.Stat(cacheFile)

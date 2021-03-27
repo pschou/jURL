@@ -37,6 +37,8 @@ Usage:
 Options:
   -ca string
         Use certificate authorities, PEM encoded
+  -cache string
+        Path for cache (default "/dev/shm")
   -cert string
         Use client cert in request, PEM encoded
   -certkey string
