@@ -1,9 +1,9 @@
 # JURL - JSON URL downloader and parser
 
-Imagine how many times the command-line shell, such as BaSH, calls `curl` and
+Imagine how many times the command-line shell, such as BaSH, calls `cURL` and
 then pipes that output to `jq`.  What's even worse is that the same rest
 endpoint is used multiple times in one script or between scripts.  Enter
-`jurl`, this compact tool gives the basic set features of `curl` and `jq` in
+`jurl`, this compact tool gives the basic set features of `cURL` and `jq` in
 one binary.
 
 This way multiple queries to the same endpoint will return the same results and
