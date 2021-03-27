@@ -43,10 +43,12 @@ Options:
         Key file for client cert, PEM encoded
   -debug
         Debug / verbose output
+  -delay duration
+        Delay between retries (default 7s)
   -i    Include header in output
   -k    Ignore certificate validation checks
   -maxtries int
-        Maximum number of retries (default 30)
+        Maximum number of tries (default 30)
   -r    Raw output, no quotes for strings
 ```
 

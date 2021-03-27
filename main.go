@@ -22,16 +22,18 @@ var debug = false
 
 func main() {
 	var maxTries int
+	var delay time.Duration
 	var debug, raw, includeHeader, certIgnore bool
 	var cert, key, ca string
 	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
-	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of retries")
+	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
 	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
 	flag.BoolVar(&includeHeader, "i", false, "Include header in output")
 	flag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
 	flag.StringVar(&ca, "ca", "", "Use certificate authorities, PEM encoded")
 	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
 	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
+	flag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
 
 	flag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
@@ -156,7 +158,7 @@ func main() {
 		}
 
 		if i%len(Args) == len(Args)-1 {
-			time.Sleep(7 * time.Second)
+			time.Sleep(delay)
 		}
 	}
 
