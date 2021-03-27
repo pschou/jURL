@@ -14,6 +14,7 @@ execute faster.
 - Retries until JSON is returned
 - Built in JQ to select the right JSON element
 - Prints out a simple string if an element is selected, or child JSON
+- Keeps a cache to avoid overloading the backend rest endpoint
 - Open source and free
 
 For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
