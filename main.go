@@ -5,15 +5,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"github.com/itchyny/gojq"
+	"github.com/juju/gnuflag"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"time"
+	//"flag"
 )
 
 var version = "debug"
@@ -24,28 +26,30 @@ func main() {
 	var maxTries int
 	var delay, maxAge time.Duration
 	var debug, raw, includeHeader, certIgnore, flush bool
-	var cert, key, ca, cache string
-	flag.BoolVar(&flush, "flush", false, "Force download, don't use cache.")
-	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
-	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
-	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
-	flag.BoolVar(&includeHeader, "i", false, "Include header in output")
-	flag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
-	flag.StringVar(&ca, "ca", "", "Use certificate authorities, PEM encoded")
-	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
-	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
-	flag.StringVar(&cache, "cache", "/dev/shm", "Path for cache")
-	flag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
-	flag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache")
+	var cert, key, ca, cache, method, postData string
+	gnuflag.BoolVar(&flush, "flush", false, "Force download, don't use cache.")
+	gnuflag.BoolVar(&debug, "debug", false, "Debug / verbose output")
+	gnuflag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
+	gnuflag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
+	gnuflag.BoolVar(&includeHeader, "i", false, "Include header in output")
+	gnuflag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
+	gnuflag.StringVar(&method, "x", "GET", "Method to use for HTTP request (ie: POST/GET)")
+	gnuflag.StringVar(&postData, "d", "", "Data to use in POST (use @filename to read from file)")
+	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded")
+	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
+	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded")
+	gnuflag.StringVar(&cache, "cache", "/dev/shm", "Path for cache")
+	gnuflag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
+	gnuflag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache")
 
-	flag.Usage = func() {
+	gnuflag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
-		fmt.Printf("Usage:\n  %s [options] \"JQuery\" URLs\n\nOptions:\n", os.Args[0])
-		flag.PrintDefaults()
+		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\nOptions:\n", os.Args[0])
+		gnuflag.PrintDefaults()
 	}
 
-	flag.Parse()
-	Args := flag.Args()
+	gnuflag.Parse(false)
+	Args := gnuflag.Args()
 
 	var caCertPool *x509.CertPool
 	if ca != "" {
@@ -71,7 +75,7 @@ func main() {
 	}
 
 	if len(Args) < 2 {
-		flag.Usage()
+		gnuflag.Usage()
 		os.Exit(1)
 		return
 	}
@@ -127,9 +131,28 @@ func main() {
 			Certificates:       []tls.Certificate{keypair},
 		}
 		if debug {
-			log.Println("http get", urls[i])
+			log.Println("HTTP", method, urls[i])
 		}
-		resp, err := http.Get(urls[i].String())
+		var err error
+		var resp *http.Response
+		switch method {
+		case "GET":
+			resp, err = http.Get(urls[i].String())
+		case "POST":
+			//r := strings.NewReader("")
+			if len(postData) > 0 && postData[0] == '@' {
+				f, err := os.Open(postData[1:])
+				if err != nil {
+					log.Fatal("Unable to open", postData[1:])
+				}
+				defer f.Close()
+				resp, err = http.Post(urls[i].String(), "application/json", f)
+			} else {
+				resp, err = http.Post(urls[i].String(), "application/json", strings.NewReader(postData))
+			}
+		default:
+			log.Fatal("Unknown method", method)
+		}
 		if includeHeader {
 			fmt.Fprintf(os.Stderr, "%s %s\n", resp.Proto, resp.Status)
 			for key, vals := range resp.Header {

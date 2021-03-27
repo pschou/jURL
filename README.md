@@ -39,27 +39,34 @@ Usage:
   ./jurl [options] "JSON Parser" URLs
 
 Options:
-  -ca string
-        Use certificate authorities, PEM encoded
-  -cache string
-        Path for cache (default "/dev/shm")
-  -cert string
-        Use client cert in request, PEM encoded
-  -certkey string
-        Key file for client cert, PEM encoded
-  -debug
-        Debug / verbose output
-  -delay duration
-        Delay between retries (default 7s)
-  -flush
-        Force download, don't use cache.
-  -i    Include header in output
-  -k    Ignore certificate validation checks
-  -maxage duration
-        Max age for cache (default 4h0m0s)
-  -maxtries int
-        Maximum number of tries (default 30)
-  -r    Raw output, no quotes for strings
+--cacert (= "")
+    Use certificate authorities, PEM encoded
+--cache (= "/dev/shm")
+    Path for cache
+--cert (= "")
+    Use client cert in request, PEM encoded
+-d (= "")
+    Data to use in POST (use @filename to read from file)
+--debug  (= false)
+    Debug / verbose output
+--delay  (= 7s)
+    Delay between retries
+--flush  (= false)
+    Force download, don't use cache.
+-i  (= false)
+    Include header in output
+-k  (= false)
+    Ignore certificate validation checks
+--key (= "")
+    Key file for client cert, PEM encoded
+--maxage  (= 4h0m0s)
+    Max age for cache
+--maxtries  (= 30)
+    Maximum number of tries
+-r  (= false)
+    Raw output, no quotes for strings
+-x (= "GET")
+    Method to use for HTTP request (ie: POST/GET)
 ```
 
 ## What we want
