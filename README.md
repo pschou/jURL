@@ -75,7 +75,7 @@ instead of asking `cURL` to blindly fetch something, we use `jURL` which does
 this task and ensures success:
 
 ```
-[schou]$ jurl .title https://jsonplaceholder.typicode.com/todos/1
+[schou]$ jurl -r .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
 ```
 
