@@ -20,7 +20,9 @@ For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
 For example, OpenStack or CS2 infrastructure both of which provide metadata / JSON
 endpoints for collecting system details.  These details don't change, but they
 can be queried multiple times for many uses, such as metrics, system
-identification, and health monitoring.  This binary is a portable package,
+identification, and health monitoring.  This tool is the ideal script driven choice.
+
+This binary is a portable package,
 statically compiled binary, and the minimalist replies mean it suits well to
 sit inside any script and run in a shell escape.
 
