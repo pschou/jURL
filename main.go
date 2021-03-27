@@ -1,7 +1,8 @@
 package main
 
 import (
-	//"crypto/tls"
+	"crypto/tls"
+	"flag"
 	//"errors"
 	"fmt"
 	//"github.com/miekg/dns"
@@ -26,49 +27,89 @@ func main() {
 		debug = true
 		os.Args = os.Args[1:]
 	}
+	var maxTries int
+	var raw, includeHeader, certIgnore bool
+	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of retries")
+	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
+	flag.BoolVar(&includeHeader, "i", false, "Include header in output")
+	flag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
 
-	if len(os.Args) < 3 {
-		fmt.Println("Simple JSON URL download and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: "+version+
-			"\n\nSyntax:", os.Args[0], "\"JQ_QUERY\" [URL]")
+	flag.Usage = func() {
+		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
+		fmt.Printf("Usage:\n  %s [options] \"JQuery\" URL\n\nOptions:\n", os.Args[0])
+		flag.PrintDefaults()
+	}
+
+	flag.Parse()
+	Args := flag.Args()
+	//fmt.Printf("osArgs %#v\n", Args)
+
+	if len(Args) < 2 {
+		flag.Usage()
 		os.Exit(1)
 		return
 	}
 
-	h := sha1.New()
-	h.Write([]byte(os.Args[2]))
-	h.Write([]byte(fmt.Sprintf("%d", os.Getuid())))
-	bs := h.Sum(nil)
-
-	cacheFile := fmt.Sprintf("/dev/shm/jurl_%x", bs)
+	JQString := Args[0]
+	Args = Args[1:]
 	var dat map[string]interface{}
+	var cacheFiles = make([]string, len(Args))
+	var urls = make([](*url.URL), len(Args))
 
-	if _, err := os.Stat(cacheFile); err == nil {
-		if debug {
-			log.Println("found cache", cacheFile)
+	for i, Arg := range Args {
+		u, err := url.Parse(Arg)
+		if err != nil {
+			fmt.Println("Malformed URL:", err)
+			os.Exit(1)
 		}
-		byt, err := ioutil.ReadFile(cacheFile)
-		if err == nil {
+		urls[i] = u
+	}
+
+	for i, Arg := range Args {
+		h := sha1.New()
+		h.Write([]byte(Arg))
+		h.Write([]byte(fmt.Sprintf("%d", os.Getuid())))
+		bs := h.Sum(nil)
+
+		cacheFile := fmt.Sprintf("/dev/shm/jurl_%x", bs)
+		cacheFiles[i] = cacheFile
+
+		if _, err := os.Stat(cacheFile); err == nil {
 			if debug {
-				log.Println("using cache", cacheFile)
+				log.Println("found cache", cacheFile)
 			}
-			json.Unmarshal(byt, &dat)
+			byt, err := ioutil.ReadFile(cacheFile)
+			if err == nil {
+				if debug {
+					log.Println("using cache", cacheFile)
+				}
+				if includeHeader {
+					fmt.Fprintf(os.Stderr, "Header skipped as cache used\nURL: %s\nFile: %s\n", urls[i], cacheFile)
+				}
+				json.Unmarshal(byt, &dat)
+				break
+			}
 		}
 	}
 
-	u, err := url.Parse(os.Args[2])
-	if err != nil {
-		fmt.Println("Malformed URL:", err)
-		os.Exit(1)
-	}
-	if debug {
-		fmt.Println("found", u)
-	}
-
-	for len(dat) == 0 {
+	for j := 0; j < maxTries && len(dat) == 0; j++ {
+		i := j % len(Args)
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: certIgnore,
+		}
 		if debug {
-			log.Println("http get", u)
+			log.Println("http get", urls[i])
 		}
-		resp, err := http.Get(u.String())
+		resp, err := http.Get(urls[i].String())
+		if includeHeader {
+			fmt.Fprintf(os.Stderr, "%s %s\n", resp.Proto, resp.Status)
+			for key, vals := range resp.Header {
+				for _, val := range vals {
+					fmt.Fprintf(os.Stderr, "%s: %s\n", key, val)
+				}
+			}
+			fmt.Fprintf(os.Stderr, "\n")
+		}
 		if err == nil {
 			byt, err := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
@@ -76,13 +117,13 @@ func main() {
 			if err == nil {
 				err = json.Unmarshal(byt, &dat)
 				if err != nil && debug {
-					log.Println("cannot unmarshall url:", u, "err:", err)
+					log.Println("cannot unmarshall url:", urls[i], "err:", err)
 				}
 				if err == nil {
 					if debug {
 						log.Println("writing out file")
 					}
-					err = ioutil.WriteFile(cacheFile, byt, 0666)
+					err = ioutil.WriteFile(cacheFiles[i], byt, 0666)
 					if err != nil && debug {
 						log.Println("error writing file:", err)
 					}
@@ -91,16 +132,12 @@ func main() {
 			}
 		}
 
-		time.Sleep(5 * time.Second)
-		switch u.Scheme {
-		case "http":
-			u.Scheme = "https"
-		case "https":
-			u.Scheme = "http"
+		if i%len(Args) == len(Args)-1 {
+			time.Sleep(7 * time.Second)
 		}
 	}
 
-	query, err := gojq.Parse(os.Args[1])
+	query, err := gojq.Parse(JQString)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -116,8 +153,12 @@ func main() {
 		if debug {
 			fmt.Printf("%#v\n", v)
 		} else {
-			out, _ := json.Marshal(v)
-			fmt.Printf(string(out))
+			if raw {
+				fmt.Printf("%s\n", v)
+			} else {
+				out, _ := json.Marshal(v)
+				fmt.Println(string(out))
+			}
 		}
 	}
 }

@@ -6,12 +6,17 @@ endpoint is used multiple times in one script or between scripts.  Enter
 `jurl`, this compact tool gives the basic set features of `curl` and `jq` in
 one binary.
 
-For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
 This way multiple queries to the same endpoint will return the same results and
 execute faster.
 
 ## Why do I care?
 
+- Retries until JSON is returned
+- Built in JQ to select the right JSON element
+- Prints out a simple string if an element is selected, or child JSON
+- Open source and free
+
+For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
 For example, OpenStack or CS2 infrastructure both of provide metadata / JSON
 endpoints for collecting system details.  These details don't change, but they
 can be queried multiple times for many uses, such as metrics, system
@@ -31,7 +36,7 @@ Syntax: ./jurl "JQ_QUERY" [URL]
 
 ## Example
 
-Here is an example showing usage with a rest endpoint
+Here is an example showing usage using a rest endpoint:
 ```
 [schou]$ curl https://jsonplaceholder.typicode.com/todos/1
 {
@@ -40,6 +45,20 @@ Here is an example showing usage with a rest endpoint
   "title": "delectus aut autem",
   "completed": false
 }
+```
+
+How one would typically use cURL and JQ together:
+```
+[schou]$ curl -s https://jsonplaceholder.typicode.com/todos/1 | jq -r .title
+delectus aut autem
+```
+
+The problem here is if `cURL` hits a broken endpoint or is fed a 404 error
+message, JQ parses junk.  The old saying, junk in produces junk out.  So
+instead of asking `cURL` to blindly fetch something, we use `jURL` which does
+this task and ensures success:
+
+```
 [schou]$ jurl .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
 ```
