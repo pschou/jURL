@@ -29,7 +29,7 @@ func main() {
 	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
 	flag.BoolVar(&includeHeader, "i", false, "Include header in output")
 	flag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
-	flag.StringVar(&ca, "ca", "", "Use client cert in request, PEM encoded")
+	flag.StringVar(&ca, "ca", "", "Use certificate authorities, PEM encoded")
 	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
 	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
 

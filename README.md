@@ -36,7 +36,7 @@ Usage:
 
 Options:
   -ca string
-        Use client cert in request, PEM encoded
+        Use certificate authorities, PEM encoded
   -cert string
         Use client cert in request, PEM encoded
   -certkey string
