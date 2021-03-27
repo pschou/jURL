@@ -34,7 +34,7 @@ $ ./jurl
 Simple JSON URL download and parser tool, Written by paul (paulschou.com)
 
 Usage:
-  ./jurl [options] "JQuery" URLs
+  ./jurl [options] "JSON Parser" URLs
 
 Options:
   -ca string
