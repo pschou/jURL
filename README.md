@@ -29,9 +29,17 @@ sit inside any script and run in a shell escape.
 
 ```
 $ ./jurl
-Simple JSON URL download and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: 0.1.20210325.1930
+Simple JSON URL download and parser tool, Written by paul (paulschou.com)
 
-Syntax: ./jurl "JQ_QUERY" [URL]
+Usage:
+  ./jurl [options] "JQuery" URLs
+
+Options:
+  -i    Include header in output
+  -k    Ignore certificate validation checks
+  -maxtries int
+        Maximum number of retries (default 30)
+  -r    Raw output, no quotes for strings
 ```
 
 ## Example

@@ -36,7 +36,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
-		fmt.Printf("Usage:\n  %s [options] \"JQuery\" URL\n\nOptions:\n", os.Args[0])
+		fmt.Printf("Usage:\n  %s [options] \"JQuery\" URLs\n\nOptions:\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 
