@@ -45,8 +45,12 @@ Options:
         Debug / verbose output
   -delay duration
         Delay between retries (default 7s)
+  -flush
+        Force download, don't use cache.
   -i    Include header in output
   -k    Ignore certificate validation checks
+  -maxage duration
+        Max age for cache (default 4h0m0s)
   -maxtries int
         Maximum number of tries (default 30)
   -r    Raw output, no quotes for strings
@@ -79,5 +83,12 @@ this task and ensures success:
 ```
 [schou]$ jurl -r .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
+```
+
+If you have two or more URLs with the same information and want to use them
+as backups:
+```
+[schou]$ jurl ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
+"quis ut nam facilis et officia qui"
 ```
 

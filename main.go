@@ -22,9 +22,10 @@ var debug = false
 
 func main() {
 	var maxTries int
-	var delay time.Duration
-	var debug, raw, includeHeader, certIgnore bool
+	var delay, maxAge time.Duration
+	var debug, raw, includeHeader, certIgnore, flush bool
 	var cert, key, ca string
+	flag.BoolVar(&flush, "flush", false, "Force download, don't use cache.")
 	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
 	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
 	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
@@ -34,6 +35,7 @@ func main() {
 	flag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
 	flag.StringVar(&key, "certkey", "", "Key file for client cert, PEM encoded")
 	flag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
+	flag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache")
 
 	flag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
@@ -97,7 +99,8 @@ func main() {
 		cacheFile := fmt.Sprintf("/dev/shm/jurl_%x", bs)
 		cacheFiles[i] = cacheFile
 
-		if _, err := os.Stat(cacheFile); err == nil {
+		stat, err := os.Stat(cacheFile)
+		if err == nil && !flush && time.Now().Add(maxAge).After(stat.ModTime()) {
 			if debug {
 				log.Println("found cache", cacheFile)
 			}
