@@ -1,14 +1,11 @@
 package main
 
 import (
-	"crypto/tls"
-	"flag"
-	//"errors"
-	"fmt"
-	//"github.com/miekg/dns"
-	//"math/rand"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"github.com/itchyny/gojq"
 	"io/ioutil"
 	"log"
@@ -23,12 +20,9 @@ var version = "debug"
 var debug = false
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "-debug" {
-		debug = true
-		os.Args = os.Args[1:]
-	}
 	var maxTries int
-	var raw, includeHeader, certIgnore bool
+	var debug, raw, includeHeader, certIgnore bool
+	flag.BoolVar(&debug, "debug", false, "Debug / verbose output")
 	flag.IntVar(&maxTries, "maxtries", 30, "Maximum number of retries")
 	flag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
 	flag.BoolVar(&includeHeader, "i", false, "Include header in output")

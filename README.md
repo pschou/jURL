@@ -35,6 +35,8 @@ Usage:
   ./jurl [options] "JQuery" URLs
 
 Options:
+  -debug
+        Debug / verbose output
   -i    Include header in output
   -k    Ignore certificate validation checks
   -maxtries int
