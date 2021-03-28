@@ -17,16 +17,16 @@ execute faster.
 - Keeps a cache to avoid overloading the backend rest endpoint
 - Open source and free
 
-For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
-This cache will be used before any of the provided URLs are downloaded.
+For efficiency, `jurl` can store a cached response in a temporary directory (like `/dev/shm/jurl_...`).
+This cache will be used in future queries before any of the provided URLs are downloaded (when using the flag -C).
 For example, OpenStack or CS2 infrastructure both of which provide metadata / JSON
 endpoints for collecting system details.  These details don't change, but they
 can be queried multiple times for many uses, such as metrics, system
 identification, and health monitoring.  This tool is the ideal script driven choice.
 
 This binary is a portable package,
-statically compiled binary, and the minimalist replies mean it suits well to
-sit inside any script and run in a shell escape.
+statically compiled binary, and with the minimalist output, it is tailored to and suits well for usage
+inside any script, invoked via a shell command.
 
 
 ## Syntax
