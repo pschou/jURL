@@ -1,4 +1,4 @@
-# jqURL - JSON Parser URL downloader and parser
+# jqURL - URL downloader and JSON parser
 
 Imagine how many times the command-line shell, such as BaSH, calls `cURL` and
 then pipes that output to `jq`.  What's even worse is that the same rest
