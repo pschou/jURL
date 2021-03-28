@@ -1,13 +1,15 @@
-# JURL - JSON URL downloader and parser
+# jqURL - URL downloader and JSON parser
 
 Imagine how many times the command-line shell, such as BaSH, calls `cURL` and
 then pipes that output to `jq`.  What's even worse is that the same rest
 endpoint is used multiple times in one script or between scripts.  Enter
-`jurl`, this compact tool gives the basic set features of `cURL` and `jq` in
+`jqurl`, this compact tool gives the basic set features of `cURL` and `jq` in
 one binary.
 
 This way multiple queries to the same endpoint will return the same results and
 execute faster.
+
+Pronounced like "j curl".
 
 ## Why do I care?
 
@@ -17,25 +19,25 @@ execute faster.
 - Keeps a cache to avoid overloading the backend rest endpoint
 - Open source and free
 
-For efficiency, `jurl` will store a cached response in `/dev/shm/jurl_...`.
-This cache will be used before any of the provided URLs are downloaded.
+For efficiency, `jqurl` can store a cached response in a temporary directory (like `/dev/shm/jqurl_...`).
+This cache will be used in future queries before any of the provided URLs are downloaded (when using the flag -C).
 For example, OpenStack or CS2 infrastructure both of which provide metadata / JSON
 endpoints for collecting system details.  These details don't change, but they
 can be queried multiple times for many uses, such as metrics, system
 identification, and health monitoring.  This tool is the ideal script driven choice.
 
 This binary is a portable package,
-statically compiled binary, and the minimalist replies mean it suits well to
-sit inside any script and run in a shell escape.
+statically compiled binary, and with the minimalist output, it is tailored to and suits well for usage
+inside any script, invoked via a shell command.
 
 
 ## Syntax
 
 ```
-$ ./jurl
+$ ./jqurl
 Simple JSON URL download and parser tool, Written by paul (paulschou.com)
 Usage:
-  ./jurl [options] "JSON Parser" URLs
+  ./jqurl [options] "JSON Parser" URLs
 
 Options:
 -C, --cache
@@ -91,26 +93,26 @@ delectus aut autem
 
 The problem here is if `cURL` hits a broken endpoint or is fed a 404 error
 message, JQ parses junk.  The old saying, junk in produces junk out.  So
-instead of asking `cURL` to blindly fetch something, we use `jURL` which does
+instead of asking `cURL` to blindly fetch something, we use `jqURL` which does
 this task and ensures success:
 
 ```
-[schou]$ jurl -r .title https://jsonplaceholder.typicode.com/todos/1
+[schou]$ jqurl -Cr .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
 ```
 
 If you have two or more URLs with the same information and want to use them
 as backups:
 ```
-[schou]$ jurl -C ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
+[schou]$ jqurl -C ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
 "quis ut nam facilis et officia qui"
 ```
 
 This is an example of how to POST data and parse the reply:
 ```
-[schou]$ jurl -xPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
+[schou]$ jqurl -XPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
 {"id":101,"method":"POST"}
-[schou]$ jurl -xPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
+[schou]$ jqurl -XPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
 101
 ```
 
