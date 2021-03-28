@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/itchyny/gojq"
-	"github.com/juju/gnuflag"
+	"github.com/pschou/gnuflag"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,7 +15,6 @@ import (
 	"os"
 	"strings"
 	"time"
-	//"flag"
 )
 
 var version = "debug"
@@ -25,22 +24,31 @@ var debug = false
 func main() {
 	var maxTries int
 	var delay, maxAge time.Duration
-	var debug, raw, includeHeader, certIgnore, flush bool
-	var cert, key, ca, cache, method, postData string
-	gnuflag.BoolVar(&flush, "flush", false, "Force download, don't use cache.")
+	var debug, raw, includeHeader, certIgnore, flush, useCache bool
+	var cert, key, ca, cacheDir, method, postData string
+	gnuflag.Default = "Default"
+	gnuflag.BoolVar(&flush, "flush", false, "Force redownload, when using cache")
+	gnuflag.BoolVar(&useCache, "C", false, "Use local cache to speed up static queries")
+	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries")
 	gnuflag.BoolVar(&debug, "debug", false, "Debug / verbose output")
-	gnuflag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries")
+	gnuflag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries", "TRIES")
 	gnuflag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
+	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings")
 	gnuflag.BoolVar(&includeHeader, "i", false, "Include header in output")
+	gnuflag.BoolVar(&includeHeader, "include", false, "Include header in output")
 	gnuflag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
-	gnuflag.StringVar(&method, "x", "GET", "Method to use for HTTP request (ie: POST/GET)")
-	gnuflag.StringVar(&postData, "d", "", "Data to use in POST (use @filename to read from file)")
-	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded")
-	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded")
-	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded")
-	gnuflag.StringVar(&cache, "cache", "/dev/shm", "Path for cache")
-	gnuflag.DurationVar(&delay, "delay", 7*time.Second, "Delay between retries")
-	gnuflag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache")
+	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks")
+	gnuflag.StringVar(&method, "X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
+	gnuflag.StringVar(&method, "request", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
+	gnuflag.StringVar(&postData, "d", "", "Data to use in POST (use @filename to read from file)", "STRING")
+	gnuflag.StringVar(&postData, "data", "", "Data to use in POST (use @filename to read from file)", "STRING")
+	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
+	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded", "FILE")
+	gnuflag.StringVar(&cert, "E", "", "Use client cert in request, PEM encoded", "FILE")
+	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
+	gnuflag.StringVar(&cacheDir, "cachedir", "/dev/shm", "Path for cache", "DIR")
+	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
+	gnuflag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache", "DURATION")
 
 	gnuflag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
@@ -101,11 +109,11 @@ func main() {
 		h.Write([]byte(fmt.Sprintf("%d", os.Getuid())))
 		bs := h.Sum(nil)
 
-		cacheFile := fmt.Sprintf("%s/jurl_%x", cache, bs)
+		cacheFile := fmt.Sprintf("%s/jurl_%x", cacheDir, bs)
 		cacheFiles[i] = cacheFile
 
 		stat, err := os.Stat(cacheFile)
-		if err == nil && !flush && time.Now().Add(maxAge).After(stat.ModTime()) {
+		if err == nil && !flush && useCache && time.Now().Add(maxAge).After(stat.ModTime()) {
 			if debug {
 				log.Println("found cache", cacheFile)
 			}
@@ -172,6 +180,9 @@ func main() {
 					log.Println("cannot unmarshall url:", urls[i], "err:", err)
 				}
 				if err == nil {
+					if !useCache {
+						break
+					}
 					if debug {
 						log.Println("writing out file")
 					}
@@ -206,7 +217,7 @@ func main() {
 			fmt.Printf("%#v\n", v)
 		} else {
 			if raw {
-				fmt.Printf("%s\n", v)
+				fmt.Printf("%v\n", v)
 			} else {
 				out, _ := json.Marshal(v)
 				fmt.Println(string(out))

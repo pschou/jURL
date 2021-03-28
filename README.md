@@ -34,39 +34,40 @@ sit inside any script and run in a shell escape.
 ```
 $ ./jurl
 Simple JSON URL download and parser tool, Written by paul (paulschou.com)
-
 Usage:
   ./jurl [options] "JSON Parser" URLs
 
 Options:
---cacert (= "")
-    Use certificate authorities, PEM encoded
---cache (= "/dev/shm")
-    Path for cache
---cert (= "")
-    Use client cert in request, PEM encoded
--d (= "")
-    Data to use in POST (use @filename to read from file)
---debug  (= false)
-    Debug / verbose output
---delay  (= 7s)
-    Delay between retries
---flush  (= false)
-    Force download, don't use cache.
--i  (= false)
-    Include header in output
--k  (= false)
-    Ignore certificate validation checks
---key (= "")
-    Key file for client cert, PEM encoded
---maxage  (= 4h0m0s)
-    Max age for cache
---maxtries  (= 30)
-    Maximum number of tries
--r  (= false)
-    Raw output, no quotes for strings
--x (= "GET")
-    Method to use for HTTP request (ie: POST/GET)
+-C, --cache
+          Use local cache to speed up static queries
+-E, --cert FILE (Default= "")
+          Use client cert in request, PEM encoded
+-X, --request METHOD (Default= "GET")
+          Method to use for HTTP request (ie: POST/GET)
+    --cacert FILE (Default= "")
+          Use certificate authorities, PEM encoded
+    --cachedir DIR (Default= "/dev/shm")
+          Path for cache
+-d, --data STRING (Default= "")
+          Data to use in POST (use @filename to read from file)
+    --debug
+          Debug / verbose output
+    --flush
+          Force redownload, when using cache
+-i, --include
+          Include header in output
+-k, --insecure
+          Ignore certificate validation checks
+    --key FILE (Default= "")
+          Key file for client cert, PEM encoded
+    --maxage DURATION  (Default= 4h0m0s)
+          Max age for cache
+    --maxtries TRIES  (Default= 30)
+          Maximum number of tries
+-r, --raw-output
+          Raw output, no quotes for strings
+    --retry-delay DURATION  (Default= 7s)
+          Delay between retries
 ```
 
 ## What we want
@@ -101,7 +102,15 @@ delectus aut autem
 If you have two or more URLs with the same information and want to use them
 as backups:
 ```
-[schou]$ jurl ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
+[schou]$ jurl -C ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
 "quis ut nam facilis et officia qui"
+```
+
+This is an example of how to POST data and parse the reply:
+```
+[schou]$ jurl -xPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
+{"id":101,"method":"POST"}
+[schou]$ jurl -xPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
+101
 ```
 
