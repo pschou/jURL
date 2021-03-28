@@ -1,4 +1,4 @@
-# jqURL - JSON Parser URL downloader and parser, pronounced like "j curl"
+# jqURL - JSON Parser URL downloader and parser
 
 Imagine how many times the command-line shell, such as BaSH, calls `cURL` and
 then pipes that output to `jq`.  What's even worse is that the same rest
@@ -8,6 +8,8 @@ one binary.
 
 This way multiple queries to the same endpoint will return the same results and
 execute faster.
+
+Pronounced like "j curl".
 
 ## Why do I care?
 
