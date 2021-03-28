@@ -1,5 +1,5 @@
-PROG_NAME := "jurl"
-IMAGE_NAME := "pschou/jurl"
+PROG_NAME := "jqurl"
+IMAGE_NAME := "pschou/jqurl"
 VERSION = 0.1.$(shell date -u +%Y%m%d.%H%M)
 FLAGS := "-s -w -X main.version=${VERSION}"
 
