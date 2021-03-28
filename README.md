@@ -95,7 +95,7 @@ instead of asking `cURL` to blindly fetch something, we use `jURL` which does
 this task and ensures success:
 
 ```
-[schou]$ jurl -r .title https://jsonplaceholder.typicode.com/todos/1
+[schou]$ jurl -Cr .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
 ```
 
@@ -108,9 +108,9 @@ as backups:
 
 This is an example of how to POST data and parse the reply:
 ```
-[schou]$ jurl -xPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
+[schou]$ jurl -XPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
 {"id":101,"method":"POST"}
-[schou]$ jurl -xPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
+[schou]$ jurl -XPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
 101
 ```
 
