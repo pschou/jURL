@@ -82,7 +82,7 @@ func main() {
 	gnuflag.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
 
 	gnuflag.Usage = func() {
-		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
+		fmt.Println("jqURL - URL and JSON parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
 		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\nOptions:\n", os.Args[0])
 		gnuflag.PrintDefaults()
 	}

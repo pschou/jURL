@@ -1,4 +1,4 @@
-# jqURL - URL downloader and JSON parser
+# jqURL - URL and JSON parser tool
 
 Imagine how many times the command-line shell, such as BaSH, calls `cURL` and
 then pipes that output to `jq`.  What's even worse is that the same rest
@@ -35,7 +35,7 @@ inside any script, invoked via a shell command.
 
 ```
 $ jqurl
-Simple JSON URL download and parser tool, Written by paul (paulschou.com)
+jqURL - URL and JSON parser tool, Written by paul (paulschou.com)
 Usage:
   jqurl [options] "JSON Parser" URLs
 
