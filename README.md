@@ -34,7 +34,7 @@ inside any script, invoked via a shell command.
 ## Syntax
 
 ```
-$ ./jqurl
+$ jqurl
 Simple JSON URL download and parser tool, Written by paul (paulschou.com)
 Usage:
   jqurl [options] "JSON Parser" URLs
@@ -48,6 +48,8 @@ Options:
           Custom header to pass to server
 -L, --location
           Follow redirects
+-P, --pretty
+          Pretty print JSON with indents
 -X, --request METHOD (Default= "GET")
           Method to use for HTTP request (ie: POST/GET)
     --cacert FILE (Default= "")
@@ -70,6 +72,8 @@ Options:
           Max age for cache
     --maxtries TRIES  (Default= 30)
           Maximum number of tries
+-o, --output FILE (Default= "")
+          Write output to <file> instead of stdout
 -r, --raw-output
           Raw output, no quotes for strings
     --retry-delay DURATION  (Default= 7s)
@@ -116,9 +120,23 @@ Note that `-C` encourages caching, re-using the previous request.
 
 This is an example of how to POST data and parse the reply:
 ```
-[schou]$ jqurl -XPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
-{"id":101,"method":"POST"}
+[schou]$ jqurl -P -XPOST -d $'{"method": "POST"}' . https://jsonplaceholder.typicode.com/posts
+{
+  "id": 101,
+  "method": "POST"
+}
 [schou]$ jqurl -XPOST -d $'{"method": "POST"}' .id https://jsonplaceholder.typicode.com/posts
 101
 ```
 
+As the `--header` or `-H` option works on all header elements, one can use this to both
+set any User-Agent or Cookie elements, such as:
+```
+$ jqurl -H "Cookie: csrftoken=abcd" -H "User-Agent: Mozilla" . https://jsonplaceholder.typicode.com/todos/1
+```
+
+For ease of use, single dashed flags can be combined:
+```
+$ jqurl -CPXGET . https://jsonplaceholder.typicode.com/todos/1
+```
+Here the `-C` and `-P` need no arguments, while `-X` takes one `"GET"`.

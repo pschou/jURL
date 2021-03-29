@@ -43,12 +43,14 @@ func (h *headerValue) String() string   { return "\"content-type: application/js
 func main() {
 	var maxTries int
 	var delay, maxAge time.Duration
-	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects bool
-	var cert, key, ca, cacheDir, method, postData string
+	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
+	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
 	gnuflag.Default = "Default"
 	gnuflag.Var(headerVals, "H", "Custom header to pass to server", "\"Key: Value\"")
 	gnuflag.Var(headerVals, "header", "Custom header to pass to server", "\"Key: Value\"")
+	gnuflag.BoolVar(&pretty, "P", false, "Pretty print JSON with indents")
+	gnuflag.BoolVar(&pretty, "pretty", false, "Pretty print JSON with indents")
 	gnuflag.BoolVar(&followRedirects, "L", false, "Follow redirects")
 	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects")
 	gnuflag.BoolVar(&flush, "flush", false, "Force redownload, when using cache")
@@ -71,6 +73,8 @@ func main() {
 	gnuflag.StringVar(&cert, "E", "", "Use client cert in request, PEM encoded", "FILE")
 	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
 	gnuflag.StringVar(&cacheDir, "cachedir", "/dev/shm", "Path for cache", "DIR")
+	gnuflag.StringVar(&outputFile, "o", "", "Write output to <file> instead of stdout", "FILE")
+	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE")
 	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
 	gnuflag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache", "DURATION")
 
@@ -262,13 +266,28 @@ func main() {
 		}
 		if debug {
 			fmt.Printf("%#v\n", v)
-		} else {
-			if raw {
-				fmt.Printf("%v\n", v)
-			} else {
-				out, _ := json.Marshal(v)
-				fmt.Println(string(out))
+		}
+
+		output := os.Stdout
+		if outputFile != "" {
+			f, err := os.Create(outputFile)
+			if err != nil {
+				log.Fatal("Error creating output file", err)
 			}
+			defer f.Close()
+			output = f
+		}
+
+		if raw {
+			fmt.Fprintf(output, "%v\n", v)
+		} else {
+			var jsonOutput []byte
+			if pretty {
+				jsonOutput, _ = json.MarshalIndent(v, "", "  ")
+			} else {
+				jsonOutput, _ = json.Marshal(v)
+			}
+			fmt.Fprintf(output, "%s\n", string(jsonOutput))
 		}
 	}
 }
