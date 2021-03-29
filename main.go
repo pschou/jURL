@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
@@ -42,7 +43,7 @@ func (h *headerValue) String() string   { return "\"content-type: application/js
 
 func main() {
 	var maxTries int
-	var delay, maxAge time.Duration
+	var delay, maxAge, timeout time.Duration
 	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
 	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
@@ -57,7 +58,7 @@ func main() {
 	gnuflag.BoolVar(&useCache, "C", false, "Use local cache to speed up static queries")
 	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries")
 	gnuflag.BoolVar(&debug, "debug", false, "Debug / verbose output")
-	gnuflag.IntVar(&maxTries, "maxtries", 30, "Maximum number of tries", "TRIES")
+	gnuflag.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
 	gnuflag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
 	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings")
 	gnuflag.BoolVar(&includeHeader, "i", false, "Include header in output")
@@ -76,7 +77,9 @@ func main() {
 	gnuflag.StringVar(&outputFile, "o", "", "Write output to <file> instead of stdout", "FILE")
 	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE")
 	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
-	gnuflag.DurationVar(&maxAge, "maxage", 4*time.Hour, "Max age for cache", "DURATION")
+	gnuflag.DurationVar(&timeout, "m", 15*time.Second, "Timeout per request", "DURATION")
+	gnuflag.DurationVar(&timeout, "max-time", 15*time.Second, "Timeout per request", "DURATION")
+	gnuflag.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
 
 	gnuflag.Usage = func() {
 		fmt.Println("Simple JSON URL downloader and parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
@@ -198,15 +201,19 @@ func main() {
 					rdr = strings.NewReader(postData)
 				}
 			}
-			req, err = http.NewRequest(method, urls[i].String(), rdr)
+
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+
+			req, err = http.NewRequestWithContext(ctx, method, urls[i].String(), rdr)
+			if err != nil {
+				log.Fatal("New request error:", err)
+			}
 			for key, val := range Headers {
 				if debug {
 					fmt.Printf("Header-- %s: %s\n", key, val)
 				}
 				req.Header.Set(key, val)
-			}
-			if err != nil {
-				log.Fatal("New request error:", err)
 			}
 			resp, err = client.Do(req)
 		default:

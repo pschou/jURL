@@ -68,9 +68,11 @@ Options:
           Ignore certificate validation checks
     --key FILE (Default= "")
           Key file for client cert, PEM encoded
-    --maxage DURATION  (Default= 4h0m0s)
+-m, --max-time DURATION  (Default= 15s)
+          Timeout per request
+    --max-age DURATION  (Default= 4h0m0s)
           Max age for cache
-    --maxtries TRIES  (Default= 30)
+    --max-tries TRIES  (Default= 30)
           Maximum number of tries
 -o, --output FILE (Default= "")
           Write output to <file> instead of stdout
