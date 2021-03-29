@@ -104,6 +104,7 @@ this task and ensures success:
 [schou]$ jqurl -Cr .title https://jsonplaceholder.typicode.com/todos/1
 delectus aut autem
 ```
+Note that the `-r` removes the quotes.
 
 If you have two or more URLs with the same information and want to use them
 as backups:
@@ -111,6 +112,7 @@ as backups:
 [schou]$ jqurl -C ".title" http{,s}://jsonplaceholder.typicode.com/todos/2
 "quis ut nam facilis et officia qui"
 ```
+Note that `-C` encourages caching, re-using the previous request.
 
 This is an example of how to POST data and parse the reply:
 ```
