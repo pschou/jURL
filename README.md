@@ -80,6 +80,12 @@ Options:
           Delay between retries
 ```
 
+Envionment variables available for setting:
+
+- HTTPS_PROXY
+- HTTP_PROXY
+
+
 ## What we want
 
 Here is an example showing usage using `curl` on a rest endpoint:
@@ -140,3 +146,4 @@ For ease of use, single dashed flags can be combined:
 $ jqurl -CPXGET . https://jsonplaceholder.typicode.com/todos/1
 ```
 Here the `-C` and `-P` need no arguments, while `-X` takes one `"GET"`.
+
