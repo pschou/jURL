@@ -37,13 +37,17 @@ inside any script, invoked via a shell command.
 $ ./jqurl
 Simple JSON URL download and parser tool, Written by paul (paulschou.com)
 Usage:
-  ./jqurl [options] "JSON Parser" URLs
+  jqurl [options] "JSON Parser" URLs
 
 Options:
 -C, --cache
           Use local cache to speed up static queries
 -E, --cert FILE (Default= "")
           Use client cert in request, PEM encoded
+-H, --header "Key: Value"  (Default= "content-type: application/json")
+          Custom header to pass to server
+-L, --location
+          Follow redirects
 -X, --request METHOD (Default= "GET")
           Method to use for HTTP request (ie: POST/GET)
     --cacert FILE (Default= "")

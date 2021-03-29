@@ -5,9 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/itchyny/gojq"
 	"github.com/pschou/gnuflag"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -21,12 +23,34 @@ var version = "debug"
 
 var debug = false
 
+var Headers = map[string]string{
+	"content-type": "application/json",
+}
+
+type headerValue string
+
+func (h *headerValue) Set(val string) error {
+	parts := strings.SplitN(val, ":", 2)
+	if len(parts) < 2 {
+		return errors.New("Malformatted header")
+	}
+	Headers[strings.ToLower(strings.TrimSpace(parts[0]))] = strings.TrimPrefix(parts[1], " ")
+	return nil
+}
+func (h *headerValue) Get() interface{} { return "" }
+func (h *headerValue) String() string   { return "\"content-type: application/json\"" }
+
 func main() {
 	var maxTries int
 	var delay, maxAge time.Duration
-	var debug, raw, includeHeader, certIgnore, flush, useCache bool
+	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects bool
 	var cert, key, ca, cacheDir, method, postData string
+	var headerVals *headerValue
 	gnuflag.Default = "Default"
+	gnuflag.Var(headerVals, "H", "Custom header to pass to server", "\"Key: Value\"")
+	gnuflag.Var(headerVals, "header", "Custom header to pass to server", "\"Key: Value\"")
+	gnuflag.BoolVar(&followRedirects, "L", false, "Follow redirects")
+	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects")
 	gnuflag.BoolVar(&flush, "flush", false, "Force redownload, when using cache")
 	gnuflag.BoolVar(&useCache, "C", false, "Use local cache to speed up static queries")
 	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries")
@@ -131,33 +155,56 @@ func main() {
 		}
 	}
 
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: certIgnore,
+		RootCAs:            caCertPool,
+		Certificates:       []tls.Certificate{keypair},
+	}
+	//http.DefaultTransport.IdleConnTimeout = 10 * time.Second
+	client := &http.Client{
+		Transport: http.DefaultTransport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if followRedirects == false {
+				return http.ErrUseLastResponse
+			}
+			return nil
+		},
+	}
+
 	for j := 0; j < maxTries && len(dat) == 0; j++ {
 		i := j % len(Args)
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: certIgnore,
-			RootCAs:            caCertPool,
-			Certificates:       []tls.Certificate{keypair},
-		}
 		if debug {
 			log.Println("HTTP", method, urls[i])
 		}
 		var err error
 		var resp *http.Response
+		var req *http.Request
 		switch method {
-		case "GET":
-			resp, err = http.Get(urls[i].String())
-		case "POST":
-			//r := strings.NewReader("")
-			if len(postData) > 0 && postData[0] == '@' {
-				f, err := os.Open(postData[1:])
-				if err != nil {
-					log.Fatal("Unable to open", postData[1:])
+		case "GET", "POST":
+			var rdr io.Reader
+			if method == "POST" {
+				if len(postData) > 0 && postData[0] == '@' {
+					f, err := os.Open(postData[1:])
+					if err != nil {
+						log.Fatal("Unable to open", postData[1:])
+					}
+					defer f.Close()
+					rdr = f
+				} else {
+					rdr = strings.NewReader(postData)
 				}
-				defer f.Close()
-				resp, err = http.Post(urls[i].String(), "application/json", f)
-			} else {
-				resp, err = http.Post(urls[i].String(), "application/json", strings.NewReader(postData))
 			}
+			req, err = http.NewRequest(method, urls[i].String(), rdr)
+			for key, val := range Headers {
+				if debug {
+					fmt.Printf("Header-- %s: %s\n", key, val)
+				}
+				req.Header.Set(key, val)
+			}
+			if err != nil {
+				log.Fatal("New request error:", err)
+			}
+			resp, err = client.Do(req)
 		default:
 			log.Fatal("Unknown method", method)
 		}
