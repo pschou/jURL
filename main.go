@@ -73,7 +73,13 @@ func main() {
 	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded", "FILE")
 	gnuflag.StringVar(&cert, "E", "", "Use client cert in request, PEM encoded", "FILE")
 	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
-	gnuflag.StringVar(&cacheDir, "cachedir", "/dev/shm", "Path for cache", "DIR")
+	temp := os.Getenv("TEMP")
+	if len(temp) > 4 && temp[1:2] == ":\\" {
+		// use windows temp directory name
+	} else {
+		temp = "/dev/shm"
+	}
+	gnuflag.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
 	gnuflag.StringVar(&outputFile, "o", "", "Write output to <file> instead of stdout", "FILE")
 	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE")
 	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
@@ -82,7 +88,7 @@ func main() {
 	gnuflag.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
 
 	gnuflag.Usage = func() {
-		fmt.Println("jqURL - URL and JSON parser tool, Written by paul (paulschou.com), Docs: github.com/pschou/jurl, Version: " + version)
+		fmt.Println("jqURL - URL and JSON parser tool, Written by Paul Schou (paulschou.com), Docs: github.com/pschou/jqURL, Version: " + version)
 		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\nOptions:\n", os.Args[0])
 		gnuflag.PrintDefaults()
 	}
@@ -140,7 +146,7 @@ func main() {
 		h.Write([]byte(fmt.Sprintf("%d", os.Getuid())))
 		bs := h.Sum(nil)
 
-		cacheFile := fmt.Sprintf("%s/jurl_%x", cacheDir, bs)
+		cacheFile := fmt.Sprintf("%s/jqurl_%x", cacheDir, bs)
 		cacheFiles[i] = cacheFile
 
 		stat, err := os.Stat(cacheFile)
@@ -211,7 +217,7 @@ func main() {
 			}
 			for key, val := range Headers {
 				if debug {
-					fmt.Printf("Header-- %s: %s\n", key, val)
+					fmt.Printf("Request Header: %s: %s\n", key, val)
 				}
 				req.Header.Set(key, val)
 			}
