@@ -48,30 +48,20 @@ func main() {
 	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
 	gnuflag.Default = "Default"
-	gnuflag.Var(headerVals, "H", "Custom header to pass to server", "\"Key: Value\"")
-	gnuflag.Var(headerVals, "header", "Custom header to pass to server", "\"Key: Value\"")
-	gnuflag.BoolVar(&pretty, "P", false, "Pretty print JSON with indents")
-	gnuflag.BoolVar(&pretty, "pretty", false, "Pretty print JSON with indents")
-	gnuflag.BoolVar(&followRedirects, "L", false, "Follow redirects")
-	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects")
+	gnuflag.Var(headerVals, "header", "Custom header to pass to server\n", "\"Key: Value\"", "H")
+	gnuflag.BoolVar(&pretty, "pretty", false, "Pretty print JSON with indents", "", "P")
+	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects", "", "L")
 	gnuflag.BoolVar(&flush, "flush", false, "Force redownload, when using cache")
-	gnuflag.BoolVar(&useCache, "C", false, "Use local cache to speed up static queries")
-	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries")
+	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries", "", "C")
 	gnuflag.BoolVar(&debug, "debug", false, "Debug / verbose output")
 	gnuflag.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
-	gnuflag.BoolVar(&raw, "r", false, "Raw output, no quotes for strings")
-	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings")
-	gnuflag.BoolVar(&includeHeader, "i", false, "Include header in output")
-	gnuflag.BoolVar(&includeHeader, "include", false, "Include header in output")
-	gnuflag.BoolVar(&certIgnore, "k", false, "Ignore certificate validation checks")
-	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks")
-	gnuflag.StringVar(&method, "X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
-	gnuflag.StringVar(&method, "request", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
-	gnuflag.StringVar(&postData, "d", "", "Data to use in POST (use @filename to read from file)", "STRING")
-	gnuflag.StringVar(&postData, "data", "", "Data to use in POST (use @filename to read from file)", "STRING")
+	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings", "", "r")
+	gnuflag.BoolVar(&includeHeader, "include", false, "Include header in output", "", "i")
+	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks", "test", "k")
+	gnuflag.StringVar(&method, "request", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD", "X")
+	gnuflag.StringVar(&postData, "data", "", "Data to use in POST (use @filename to read from file)", "STRING", "d")
 	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
-	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded", "FILE")
-	gnuflag.StringVar(&cert, "E", "", "Use client cert in request, PEM encoded", "FILE")
+	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded", "FILE", "E")
 	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
 	temp := os.Getenv("TEMP")
 	if len(temp) > 4 && temp[1:2] == ":\\" {
@@ -80,11 +70,9 @@ func main() {
 		temp = "/dev/shm"
 	}
 	gnuflag.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
-	gnuflag.StringVar(&outputFile, "o", "", "Write output to <file> instead of stdout", "FILE")
-	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE")
+	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE", "o")
 	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
-	gnuflag.DurationVar(&timeout, "m", 15*time.Second, "Timeout per request", "DURATION")
-	gnuflag.DurationVar(&timeout, "max-time", 15*time.Second, "Timeout per request", "DURATION")
+	gnuflag.DurationVar(&timeout, "max-time", 15*time.Second, "Timeout per request", "DURATION", "m")
 	gnuflag.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
 
 	gnuflag.Usage = func() {
@@ -93,7 +81,8 @@ func main() {
 		gnuflag.PrintDefaults()
 	}
 
-	gnuflag.Parse(false)
+	gnuflag.CommandLine.UsageIndent = 23
+	gnuflag.Parse()
 	Args := gnuflag.Args()
 
 	var caCertPool *x509.CertPool
