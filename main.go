@@ -47,7 +47,7 @@ func main() {
 	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
 	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
-	gnuflag.Default = "Default"
+	gnuflag.Default = "Default="
 	gnuflag.Var(headerVals, "header", "Custom header to pass to server\n", "\"Key: Value\"", "H")
 	gnuflag.BoolVar(&pretty, "pretty", false, "Pretty print JSON with indents", "", "P")
 	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects", "", "L")

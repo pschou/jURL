@@ -40,27 +40,27 @@ Usage:
   jqurl [options] "JSON Parser" URLs
 
 Options:
--C, --cache            Use local cache to speed up static queries  (Defaultfalse)
--E, --cert FILE        Use client cert in request, PEM encoded  (Default"")
+-C, --cache            Use local cache to speed up static queries
+-E, --cert FILE        Use client cert in request, PEM encoded  (Default="")
 -H, --header "Key: Value"  Custom header to pass to server
-                        (Default"content-type: application/json")
--L, --location         Follow redirects  (Defaultfalse)
--P, --pretty           Pretty print JSON with indents  (Defaultfalse)
--X, --request METHOD   Method to use for HTTP request (ie: POST/GET)  (Default"GET")
-    --cacert FILE      Use certificate authorities, PEM encoded  (Default"")
-    --cachedir DIR     Path for cache  (Default"/dev/shm")
--d, --data STRING      Data to use in POST (use @filename to read from file)  (Default"")
-    --debug            Debug / verbose output  (Defaultfalse)
-    --flush            Force redownload, when using cache  (Defaultfalse)
--i, --include          Include header in output  (Defaultfalse)
--k, --insecure test    Ignore certificate validation checks  (Defaultfalse)
-    --key FILE         Key file for client cert, PEM encoded  (Default"")
--m, --max-time DURATION  Timeout per request  (Default15s)
-    --max-age DURATION  Max age for cache  (Default4h0m0s)
-    --max-tries TRIES  Maximum number of tries  (Default30)
--o, --output FILE      Write output to <file> instead of stdout  (Default"")
--r, --raw-output       Raw output, no quotes for strings  (Defaultfalse)
-    --retry-delay DURATION  Delay between retries  (Default7s)
+                        (Default="content-type: application/json")
+-L, --location         Follow redirects
+-P, --pretty           Pretty print JSON with indents
+-X, --request METHOD   Method to use for HTTP request (ie: POST/GET)  (Default="GET")
+    --cacert FILE      Use certificate authorities, PEM encoded  (Default="")
+    --cachedir DIR     Path for cache  (Default="/dev/shm")
+-d, --data STRING      Data to use in POST (use @filename to read from file)  (Default="")
+    --debug            Debug / verbose output
+    --flush            Force redownload, when using cache
+-i, --include          Include header in output
+-k, --insecure test    Ignore certificate validation checks
+    --key FILE         Key file for client cert, PEM encoded  (Default="")
+-m, --max-time DURATION  Timeout per request  (Default=15s)
+    --max-age DURATION  Max age for cache  (Default=4h0m0s)
+    --max-tries TRIES  Maximum number of tries  (Default=30)
+-o, --output FILE      Write output to <file> instead of stdout  (Default="")
+-r, --raw-output       Raw output, no quotes for strings
+    --retry-delay DURATION  Delay between retries  (Default=7s)
 ```
 
 Envionment variables available for setting:
