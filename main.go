@@ -57,7 +57,7 @@ func main() {
 	gnuflag.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
 	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings", "", "r")
 	gnuflag.BoolVar(&includeHeader, "include", false, "Include header in output", "", "i")
-	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks", "test", "k")
+	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks", "", "k")
 	gnuflag.StringVar(&method, "request", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD", "X")
 	gnuflag.StringVar(&postData, "data", "", "Data to use in POST (use @filename to read from file)", "STRING", "d")
 	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
