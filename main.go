@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/itchyny/gojq"
-	"github.com/pschou/gnuflag"
+	"github.com/pschou/go-params"
 	"io"
 	"io/ioutil"
 	"log"
@@ -30,8 +30,8 @@ var Headers = map[string]string{
 
 type headerValue string
 
-func (h *headerValue) Set(val string) error {
-	parts := strings.SplitN(val, ":", 2)
+func (h *headerValue) Set(val []string) error {
+	parts := strings.SplitN(val[0], ":", 2)
 	if len(parts) < 2 {
 		return errors.New("Malformatted header")
 	}
@@ -47,43 +47,43 @@ func main() {
 	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
 	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
-	gnuflag.Default = "Default="
-	gnuflag.Var(headerVals, "header", "Custom header to pass to server\n", "\"Key: Value\"", "H")
-	gnuflag.BoolVar(&pretty, "pretty", false, "Pretty print JSON with indents", "", "P")
-	gnuflag.BoolVar(&followRedirects, "location", false, "Follow redirects", "", "L")
-	gnuflag.BoolVar(&flush, "flush", false, "Force redownload, when using cache")
-	gnuflag.BoolVar(&useCache, "cache", false, "Use local cache to speed up static queries", "", "C")
-	gnuflag.BoolVar(&debug, "debug", false, "Debug / verbose output")
-	gnuflag.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
-	gnuflag.BoolVar(&raw, "raw-output", false, "Raw output, no quotes for strings", "", "r")
-	gnuflag.BoolVar(&includeHeader, "include", false, "Include header in output", "", "i")
-	gnuflag.BoolVar(&certIgnore, "insecure", false, "Ignore certificate validation checks", "", "k")
-	gnuflag.StringVar(&method, "request", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD", "X")
-	gnuflag.StringVar(&postData, "data", "", "Data to use in POST (use @filename to read from file)", "STRING", "d")
-	gnuflag.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
-	gnuflag.StringVar(&cert, "cert", "", "Use client cert in request, PEM encoded", "FILE", "E")
-	gnuflag.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
+	params.Default = "Default="
+	params.Var(headerVals, "header H", "Custom header to pass to server\n", "'HEADER: VALUE'", 1)
+	params.PresVar(&pretty, "pretty P", "Pretty print JSON with indents")
+	params.PresVar(&followRedirects, "location L", "Follow redirects")
+	params.PresVar(&flush, "flush", "Force redownload, when using cache")
+	params.PresVar(&useCache, "cache C", "Use local cache to speed up static queries")
+	params.PresVar(&debug, "debug", "Debug / verbose output")
+	params.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
+	params.PresVar(&raw, "raw-output r", "Raw output, no quotes for strings")
+	params.PresVar(&includeHeader, "include i", "Include header in output")
+	params.PresVar(&certIgnore, "insecure k", "Ignore certificate validation checks")
+	params.StringVar(&method, "request X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
+	params.StringVar(&postData, "data d", "", "Data to use in POST (use @filename to read from file)", "STRING")
+	params.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
+	params.StringVar(&cert, "cert E", "", "Use client cert in request, PEM encoded", "FILE")
+	params.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
 	temp := os.Getenv("TEMP")
 	if len(temp) > 4 && temp[1:2] == ":\\" {
 		// use windows temp directory name
 	} else {
 		temp = "/dev/shm"
 	}
-	gnuflag.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
-	gnuflag.StringVar(&outputFile, "output", "", "Write output to <file> instead of stdout", "FILE", "o")
-	gnuflag.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
-	gnuflag.DurationVar(&timeout, "max-time", 15*time.Second, "Timeout per request", "DURATION", "m")
-	gnuflag.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
+	params.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
+	params.StringVar(&outputFile, "output o", "", "Write output to <file> instead of stdout", "FILE")
+	params.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
+	params.DurationVar(&timeout, "max-time m", 15*time.Second, "Timeout per request", "DURATION")
+	params.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
 
-	gnuflag.Usage = func() {
+	params.Usage = func() {
 		fmt.Println("jqURL - URL and JSON parser tool, Written by Paul Schou (paulschou.com), Docs: github.com/pschou/jqURL, Version: " + version)
 		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\nOptions:\n", os.Args[0])
-		gnuflag.PrintDefaults()
+		params.PrintDefaults()
 	}
 
-	gnuflag.CommandLine.UsageIndent = 23
-	gnuflag.Parse()
-	Args := gnuflag.Args()
+	params.SetUsageIndent(23)
+	params.Parse()
+	Args := params.Args()
 
 	var caCertPool *x509.CertPool
 	if ca != "" {
@@ -109,7 +109,7 @@ func main() {
 	}
 
 	if len(Args) < 2 {
-		gnuflag.Usage()
+		params.Usage()
 		os.Exit(1)
 		return
 	}

@@ -39,27 +39,30 @@ jqURL - URL and JSON parser tool, Written by paul (paulschou.com)
 Usage:
   jqurl [options] "JSON Parser" URLs
 
+Usage:
+  ./jqurl [options] "JSON Parser" URLs
+
 Options:
--C, --cache            Use local cache to speed up static queries
--E, --cert FILE        Use client cert in request, PEM encoded  (Default="")
--H, --header "Key: Value"  Custom header to pass to server
-                        (Default="content-type: application/json")
--L, --location         Follow redirects
--P, --pretty           Pretty print JSON with indents
--X, --request METHOD   Method to use for HTTP request (ie: POST/GET)  (Default="GET")
     --cacert FILE      Use certificate authorities, PEM encoded  (Default="")
+-C, --cache            Use local cache to speed up static queries
     --cachedir DIR     Path for cache  (Default="/dev/shm")
+-E, --cert FILE        Use client cert in request, PEM encoded  (Default="")
 -d, --data STRING      Data to use in POST (use @filename to read from file)  (Default="")
     --debug            Debug / verbose output
     --flush            Force redownload, when using cache
+-H, --header 'HEADER: VALUE'  Custom header to pass to server
+                         (Default="content-type: application/json")
 -i, --include          Include header in output
--k, --insecure test    Ignore certificate validation checks
+-k, --insecure         Ignore certificate validation checks
     --key FILE         Key file for client cert, PEM encoded  (Default="")
--m, --max-time DURATION  Timeout per request  (Default=15s)
+-L, --location         Follow redirects
     --max-age DURATION  Max age for cache  (Default=4h0m0s)
+-m, --max-time DURATION  Timeout per request  (Default=15s)
     --max-tries TRIES  Maximum number of tries  (Default=30)
 -o, --output FILE      Write output to <file> instead of stdout  (Default="")
+-P, --pretty           Pretty print JSON with indents
 -r, --raw-output       Raw output, no quotes for strings
+-X, --request METHOD   Method to use for HTTP request (ie: POST/GET)  (Default="GET")
     --retry-delay DURATION  Delay between retries  (Default=7s)
 ```
 

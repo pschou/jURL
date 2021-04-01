@@ -10,6 +10,9 @@ build:
 	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags=${FLAGS} -o ${PROG_NAME}.exe main.go
 	upx --lzma ${PROG_NAME}.exe
 
+jq:
+	CGO_ENABLED=0 go build -ldflags=${FLAGS} -o ${PROG_NAME} main.go
+
 docker:
 	docker build -f Dockerfile --tag ${IMAGE_NAME}:${VERSION} .
 	docker push ${IMAGE_NAME}:${VERSION}; \
