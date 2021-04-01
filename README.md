@@ -39,9 +39,6 @@ jqURL - URL and JSON parser tool, Written by paul (paulschou.com)
 Usage:
   jqurl [options] "JSON Parser" URLs
 
-Usage:
-  ./jqurl [options] "JSON Parser" URLs
-
 Options:
     --cacert FILE      Use certificate authorities, PEM encoded  (Default="")
 -C, --cache            Use local cache to speed up static queries
