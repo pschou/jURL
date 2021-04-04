@@ -35,32 +35,34 @@ inside any script, invoked via a shell command.
 
 ```
 $ jqurl
-jqURL - URL and JSON parser tool, Written by paul (paulschou.com)
+jqURL - URL and JSON parser tool, Written by Paul Schou (github.com/pschou/jqURL)
 Usage:
-  jqurl [options] "JSON Parser" URLs
+  ./jqurl [options] "JSON Parser" URLs
 
 Options:
-    --cacert FILE      Use certificate authorities, PEM encoded  (Default="")
--C, --cache            Use local cache to speed up static queries
-    --cachedir DIR     Path for cache  (Default="/dev/shm")
--E, --cert FILE        Use client cert in request, PEM encoded  (Default="")
--d, --data STRING      Data to use in POST (use @filename to read from file)  (Default="")
-    --debug            Debug / verbose output
-    --flush            Force redownload, when using cache
--H, --header 'HEADER: VALUE'  Custom header to pass to server
+  -C, --cache          Use local cache to speed up static queries
+      --cachedir DIR   Path for cache  (Default="/dev/shm")
+      --debug          Debug / verbose output
+      --flush          Force redownload, when using cache
+  -i, --include        Include header in output
+      --max-age DURATION  Max age for cache  (Default=4h0m0s)
+  -o, --output FILE    Write output to <file> instead of stdout  (Default="")
+  -P, --pretty         Pretty print JSON with indents
+  -r, --raw-output     Raw output, no quotes for strings
+Request options:
+  -d, --data STRING    Data to use in POST (use @filename to read from file)  (Default="")
+  -H, --header 'HEADER: VALUE'  Custom header to pass to server
                          (Default="content-type: application/json")
--i, --include          Include header in output
--k, --insecure         Ignore certificate validation checks
-    --key FILE         Key file for client cert, PEM encoded  (Default="")
--L, --location         Follow redirects
-    --max-age DURATION  Max age for cache  (Default=4h0m0s)
--m, --max-time DURATION  Timeout per request  (Default=15s)
-    --max-tries TRIES  Maximum number of tries  (Default=30)
--o, --output FILE      Write output to <file> instead of stdout  (Default="")
--P, --pretty           Pretty print JSON with indents
--r, --raw-output       Raw output, no quotes for strings
--X, --request METHOD   Method to use for HTTP request (ie: POST/GET)  (Default="GET")
-    --retry-delay DURATION  Delay between retries  (Default=7s)
+  -k, --insecure       Ignore certificate validation checks
+  -L, --location       Follow redirects
+  -m, --max-time DURATION  Timeout per request  (Default=15s)
+      --max-tries TRIES  Maximum number of tries  (Default=30)
+  -X, --request METHOD  Method to use for HTTP request (ie: POST/GET)  (Default="GET")
+      --retry-delay DURATION  Delay between retries  (Default=7s)
+Certificate options:
+      --cacert FILE    Use certificate authorities, PEM encoded  (Default="")
+  -E, --cert FILE      Use client cert in request, PEM encoded  (Default="")
+      --key FILE       Key file for client cert, PEM encoded  (Default="")
 ```
 
 Envionment variables available for setting:

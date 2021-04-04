@@ -48,21 +48,12 @@ func main() {
 	var cert, key, ca, cacheDir, method, postData, outputFile string
 	var headerVals *headerValue
 	params.Default = "Default="
-	params.Var(headerVals, "header H", "Custom header to pass to server\n", "'HEADER: VALUE'", 1)
 	params.PresVar(&pretty, "pretty P", "Pretty print JSON with indents")
-	params.PresVar(&followRedirects, "location L", "Follow redirects")
 	params.PresVar(&flush, "flush", "Force redownload, when using cache")
 	params.PresVar(&useCache, "cache C", "Use local cache to speed up static queries")
 	params.PresVar(&debug, "debug", "Debug / verbose output")
-	params.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
 	params.PresVar(&raw, "raw-output r", "Raw output, no quotes for strings")
 	params.PresVar(&includeHeader, "include i", "Include header in output")
-	params.PresVar(&certIgnore, "insecure k", "Ignore certificate validation checks")
-	params.StringVar(&method, "request X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
-	params.StringVar(&postData, "data d", "", "Data to use in POST (use @filename to read from file)", "STRING")
-	params.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
-	params.StringVar(&cert, "cert E", "", "Use client cert in request, PEM encoded", "FILE")
-	params.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
 	temp := os.Getenv("TEMP")
 	if len(temp) > 4 && temp[1:2] == ":\\" {
 		// use windows temp directory name
@@ -71,17 +62,29 @@ func main() {
 	}
 	params.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
 	params.StringVar(&outputFile, "output o", "", "Write output to <file> instead of stdout", "FILE")
+	params.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
+	params.GroupingSet("Request")
+	params.StringVar(&postData, "data d", "", "Data to use in POST (use @filename to read from file)", "STRING")
+	params.Var(headerVals, "header H", "Custom header to pass to server\n", "'HEADER: VALUE'", 1)
+	params.PresVar(&followRedirects, "location L", "Follow redirects")
 	params.DurationVar(&delay, "retry-delay", 7*time.Second, "Delay between retries", "DURATION")
 	params.DurationVar(&timeout, "max-time m", 15*time.Second, "Timeout per request", "DURATION")
-	params.DurationVar(&maxAge, "max-age", 4*time.Hour, "Max age for cache", "DURATION")
+	params.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
+	params.PresVar(&certIgnore, "insecure k", "Ignore certificate validation checks")
+	params.StringVar(&method, "request X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
 
 	params.Usage = func() {
-		fmt.Println("jqURL - URL and JSON parser tool, Written by Paul Schou (paulschou.com), Docs: github.com/pschou/jqURL, Version: " + version)
-		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\nOptions:\n", os.Args[0])
+		fmt.Println("jqURL - URL and JSON parser tool, Written by Paul Schou (github.com/pschou/jqURL), Version: " + version)
+		fmt.Printf("Usage:\n  %s [options] \"JSON Parser\" URLs\n\n", os.Args[0])
 		params.PrintDefaults()
 	}
 
-	params.SetUsageIndent(23)
+	params.GroupingSet("Certificate")
+	params.StringVar(&ca, "cacert", "", "Use certificate authorities, PEM encoded", "FILE")
+	params.StringVar(&cert, "cert E", "", "Use client cert in request, PEM encoded", "FILE")
+	params.StringVar(&key, "key", "", "Key file for client cert, PEM encoded", "FILE")
+
+	params.CommandLine.Indent = 2
 	params.Parse()
 	Args := params.Args()
 
