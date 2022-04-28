@@ -8,8 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/itchyny/gojq"
-	"github.com/pschou/go-params"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,6 +16,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/itchyny/gojq"
+	"github.com/pschou/go-params"
 )
 
 var version = "debug"
@@ -58,7 +59,7 @@ func main() {
 	if len(temp) > 4 && temp[1:2] == ":\\" {
 		// use windows temp directory name
 	} else {
-		temp = "/dev/shm"
+		temp = os.TempDir()
 	}
 	params.StringVar(&cacheDir, "cachedir", temp, "Path for cache", "DIR")
 	params.StringVar(&outputFile, "output o", "", "Write output to <file> instead of stdout", "FILE")
@@ -92,7 +93,7 @@ func main() {
 	if ca != "" {
 		caCert, err := ioutil.ReadFile(ca)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Error reading CA cert file:", err)
 		}
 		caCertPool = x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
@@ -107,7 +108,7 @@ func main() {
 		var err error
 		keypair, err = tls.LoadX509KeyPair(cert, key)
 		if err != nil {
-			log.Fatal(err)
+			log.Println("Error reading client cert keypair:", err)
 		}
 	}
 
@@ -164,6 +165,7 @@ func main() {
 		InsecureSkipVerify: certIgnore,
 		RootCAs:            caCertPool,
 		Certificates:       []tls.Certificate{keypair},
+		Renegotiation:      tls.RenegotiateOnceAsClient,
 	}
 	//http.DefaultTransport.IdleConnTimeout = 10 * time.Second
 	client := &http.Client{
@@ -191,7 +193,7 @@ func main() {
 				if len(postData) > 0 && postData[0] == '@' {
 					f, err := os.Open(postData[1:])
 					if err != nil {
-						log.Fatal("Unable to open", postData[1:])
+						log.Println("Unable to open", postData[1:])
 					}
 					defer f.Close()
 					rdr = f
@@ -205,7 +207,7 @@ func main() {
 
 			req, err = http.NewRequestWithContext(ctx, method, urls[i].String(), rdr)
 			if err != nil {
-				log.Fatal("New request error:", err)
+				log.Println("New request error:", err)
 			}
 			for key, val := range Headers {
 				if debug {
@@ -214,19 +216,23 @@ func main() {
 				req.Header.Set(key, val)
 			}
 			resp, err = client.Do(req)
+			if debug && err != nil {
+				fmt.Printf(" Error: %s\n", err)
+			}
 		default:
 			log.Fatal("Unknown method", method)
 		}
-		if includeHeader {
-			fmt.Fprintf(os.Stderr, "%s %s\n", resp.Proto, resp.Status)
-			for key, vals := range resp.Header {
-				for _, val := range vals {
-					fmt.Fprintf(os.Stderr, "%s: %s\n", key, val)
-				}
-			}
-			fmt.Fprintf(os.Stderr, "\n")
-		}
 		if err == nil {
+			if includeHeader {
+				fmt.Fprintf(os.Stderr, "%s %s\n", resp.Proto, resp.Status)
+				for key, vals := range resp.Header {
+					for _, val := range vals {
+						fmt.Fprintf(os.Stderr, "%s: %s\n", key, val)
+					}
+				}
+				fmt.Fprintf(os.Stderr, "\n")
+			}
+
 			byt, err := ioutil.ReadAll(resp.Body)
 			resp.Body.Close()
 
@@ -258,7 +264,7 @@ func main() {
 
 	query, err := gojq.Parse(JQString)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
 	}
 	iter := query.Run(dat) // or query.RunWithContext
 	for {
@@ -267,7 +273,7 @@ func main() {
 			break
 		}
 		if err, ok := v.(error); ok {
-			log.Fatalln(err)
+			log.Println("Error with query:", err)
 		}
 		if debug {
 			fmt.Printf("%#v\n", v)
@@ -277,7 +283,7 @@ func main() {
 		if outputFile != "" {
 			f, err := os.Create(outputFile)
 			if err != nil {
-				log.Fatal("Error creating output file", err)
+				log.Println("Error creating output file:", err)
 			}
 			defer f.Close()
 			output = f
