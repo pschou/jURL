@@ -14,20 +14,39 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 
 	"github.com/itchyny/gojq"
 	"github.com/pschou/go-params"
+	"github.com/vishvananda/netns"
 )
 
-var version = "debug"
+var (
+	version = "debug"
+	debug   = false
+	Headers = map[string]string{
+		"content-type": "application/json",
+	}
 
-var debug = false
+	JQString string
+	keypair  tls.Certificate
 
-var Headers = map[string]string{
-	"content-type": "application/json",
-}
+	raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
+	cert, key, ca, cacheDir, method, postData, outputFile                    string
+	maxTries                                                                 int
+	delay, maxAge, timeout                                                   time.Duration
+	headerVals                                                               *headerValue
+	caCertPool                                                               *x509.CertPool
+
+	dat        map[string]interface{}
+	Args       []string
+	urls       [](*url.URL)
+	cacheFiles []string
+
+	docker string
+)
 
 type headerValue string
 
@@ -43,11 +62,6 @@ func (h *headerValue) Get() interface{} { return "" }
 func (h *headerValue) String() string   { return "\"content-type: application/json\"" }
 
 func main() {
-	var maxTries int
-	var delay, maxAge, timeout time.Duration
-	var debug, raw, includeHeader, certIgnore, flush, useCache, followRedirects, pretty bool
-	var cert, key, ca, cacheDir, method, postData, outputFile string
-	var headerVals *headerValue
 	params.Default = "Default="
 	params.PresVar(&pretty, "pretty P", "Pretty print JSON with indents")
 	params.PresVar(&flush, "flush", "Force redownload, when using cache")
@@ -73,6 +87,7 @@ func main() {
 	params.IntVar(&maxTries, "max-tries", 30, "Maximum number of tries", "TRIES")
 	params.PresVar(&certIgnore, "insecure k", "Ignore certificate validation checks")
 	params.StringVar(&method, "request X", "GET", "Method to use for HTTP request (ie: POST/GET)", "METHOD")
+	params.StringVar(&docker, "docker", "", "Switch to the network of a container", "CONTAINER_ID")
 
 	params.Usage = func() {
 		fmt.Println("jqURL - URL and JSON parser tool, Written by Paul Schou (github.com/pschou/jqURL), Version: " + version)
@@ -87,13 +102,12 @@ func main() {
 
 	params.CommandLine.Indent = 2
 	params.Parse()
-	Args := params.Args()
+	Args = params.Args()
 
-	var caCertPool *x509.CertPool
 	if ca != "" {
 		caCert, err := ioutil.ReadFile(ca)
 		if err != nil {
-			log.Println("Error reading CA cert file:", err)
+			log.Fatalf("Error reading CA cert file %q: %s", ca, err)
 		}
 		caCertPool = x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
@@ -103,12 +117,11 @@ func main() {
 		// Just in case the cert and key are in the same file
 		key = cert
 	}
-	var keypair tls.Certificate
 	if cert != "" && key != "" {
 		var err error
 		keypair, err = tls.LoadX509KeyPair(cert, key)
 		if err != nil {
-			log.Println("Error reading client cert keypair:", err)
+			log.Fatalf("Error reading client cert keypair cert=%q key=%q: %s", cert, key, err)
 		}
 	}
 
@@ -118,11 +131,10 @@ func main() {
 		return
 	}
 
-	JQString := Args[0]
+	JQString = Args[0]
 	Args = Args[1:]
-	var dat map[string]interface{}
-	var cacheFiles = make([]string, len(Args))
-	var urls = make([](*url.URL), len(Args))
+	cacheFiles = make([]string, len(Args))
+	urls = make([](*url.URL), len(Args))
 
 	for i, Arg := range Args {
 		u, err := url.Parse(Arg)
@@ -161,6 +173,28 @@ func main() {
 		}
 	}
 
+	if docker != "" {
+		// Lock the OS Thread so we don't accidentally switch namespaces
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+
+		// Save the current network namespace
+		origns, _ := netns.Get()
+		defer origns.Close()
+
+		nsh, err := netns.GetFromDocker(docker)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error switching to container network space %q, err: %s", docker, err)
+			os.Exit(1)
+		}
+		defer nsh.Close()
+		netns.Set(nsh)
+	}
+
+	doCurl()
+}
+
+func doCurl() {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: certIgnore,
 		RootCAs:            caCertPool,
@@ -186,42 +220,42 @@ func main() {
 		var err error
 		var resp *http.Response
 		var req *http.Request
-		switch method {
-		case "GET", "POST":
-			var rdr io.Reader
-			if method == "POST" {
-				if len(postData) > 0 && postData[0] == '@' {
-					f, err := os.Open(postData[1:])
-					if err != nil {
-						log.Println("Unable to open", postData[1:])
-					}
-					defer f.Close()
-					rdr = f
-				} else {
-					rdr = strings.NewReader(postData)
-				}
-			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-
-			req, err = http.NewRequestWithContext(ctx, method, urls[i].String(), rdr)
-			if err != nil {
-				log.Println("New request error:", err)
-			}
-			for key, val := range Headers {
-				if debug {
-					fmt.Printf("Request Header: %s: %s\n", key, val)
+		var rdr io.Reader
+		if method == "POST" {
+			if len(postData) > 0 && postData[0] == '@' {
+				f, err := os.Open(postData[1:])
+				if err != nil {
+					log.Fatalf("Unable to open %q, err: %s", postData[1:], err)
 				}
-				req.Header.Set(key, val)
+				defer f.Close()
+				rdr = f
+			} else {
+				rdr = strings.NewReader(postData)
 			}
-			resp, err = client.Do(req)
-			if debug && err != nil {
-				fmt.Printf(" Error: %s\n", err)
-			}
-		default:
-			log.Fatal("Unknown method", method)
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+
+		req, err = http.NewRequestWithContext(ctx, method, urls[i].String(), rdr)
+		if err != nil {
+			log.Fatalf("New request error: %s", err)
+		}
+		if method == "POST" {
+			req.Header.Set("Content-Type", "x-www-form-urlencoded")
+		}
+		for key, val := range Headers {
+			if debug {
+				fmt.Printf("Request Header: %s: %s\n", key, val)
+			}
+			req.Header.Set(key, val)
+		}
+		resp, err = client.Do(req)
+		if debug && err != nil {
+			fmt.Printf("Error doing http request: %s\n", err)
+		}
+
 		if err == nil {
 			if includeHeader {
 				fmt.Fprintf(os.Stderr, "%s %s\n", resp.Proto, resp.Status)
@@ -239,7 +273,7 @@ func main() {
 			if err == nil {
 				err = json.Unmarshal(byt, &dat)
 				if err != nil && debug {
-					log.Println("cannot unmarshall url:", urls[i], "err:", err)
+					log.Fatalf("Cannot unmarshall url %q err: %s", urls[i], err)
 				}
 				if err == nil {
 					if !useCache {
@@ -250,7 +284,7 @@ func main() {
 					}
 					err = ioutil.WriteFile(cacheFiles[i], byt, 0666)
 					if err != nil && debug {
-						log.Println("error writing file:", err)
+						log.Fatalf("Error writing file: %s", err)
 					}
 					break
 				}
@@ -264,7 +298,7 @@ func main() {
 
 	query, err := gojq.Parse(JQString)
 	if err != nil {
-		log.Println(err)
+		log.Fatalf("Error compiling jq query %q: %s", JQString, err)
 	}
 	iter := query.Run(dat) // or query.RunWithContext
 	for {
@@ -273,7 +307,7 @@ func main() {
 			break
 		}
 		if err, ok := v.(error); ok {
-			log.Println("Error with query:", err)
+			log.Fatalf("Error running jq query %q: %s", JQString, err)
 		}
 		if debug {
 			fmt.Printf("%#v\n", v)
@@ -283,7 +317,7 @@ func main() {
 		if outputFile != "" {
 			f, err := os.Create(outputFile)
 			if err != nil {
-				log.Println("Error creating output file:", err)
+				log.Fatalf("Error creating output file: %s", err)
 			}
 			defer f.Close()
 			output = f
