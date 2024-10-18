@@ -5,7 +5,8 @@ FLAGS := "-s -w -X main.version=${VERSION}"
 
 
 build:
-	CGO_ENABLED=0 go build -ldflags=${FLAGS} -o ${PROG_NAME} .
+	docker rmi golang:alpine || /bin/true
+	docker run --rm -it -v ./:/go/ golang:alpine go build -ldflags=${FLAGS} -mod=readonly -o jqurl .
 
 jq:
 	CGO_ENABLED=0 go build -ldflags=${FLAGS} -o ${PROG_NAME} main.go
